@@ -27,6 +27,10 @@ pygame.time.set_timer(dot_event, dot_timer)
 
 # Create an initial dot
 dot = Dot(screen, screen_width, screen_height)
+def draw_hand_keypoints(screen, hand_keypoints, radius=5, color=(0, 255, 0)):
+    for keypoint in hand_keypoints.values():
+        x, y = keypoint
+        pygame.draw.circle(screen, color, (x, y), radius)
 
 # Main game loop
 running = True
@@ -45,6 +49,7 @@ while running:
 
     # Preprocess the frame and run inference
     input_image = preprocess_image(frame)
+
     keypoints_with_scores = run_inference(movenet_model, input_image)
 
     # Get hand keypoint coordinates
@@ -53,9 +58,9 @@ while running:
     # Map hand keypoint coordinates to game screen coordinates
     screen_hand_keypoints = {}
     for key, point in hand_keypoints.items():
-        x, y = point
-        screen_x = int(x * screen_width / input_image.shape[2])
-        screen_y = int(y * screen_height / input_image.shape[1])
+        y, x = point
+        screen_x = int(x * screen_width)
+        screen_y = int(y * screen_height)
         screen_hand_keypoints[key] = (screen_x, screen_y)
 
     # Check for collision between hand keypoints and the dot
@@ -68,6 +73,8 @@ while running:
 
     # Render the dot
     dot.render()
+    # Draw hand keypoints
+    draw_hand_keypoints(screen, screen_hand_keypoints)
 
     # Display the score
     font = pygame.font.Font(None, 36)
