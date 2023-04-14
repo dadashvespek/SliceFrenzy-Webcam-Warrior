@@ -3,19 +3,23 @@ import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
 from game_objects.dot import Dot
 
-
-# Initialize pygame and create game window
-pygame.init()
-screen_width = 640
-screen_height = 480
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Hand-Hit Dots Game")
-
 # Initialize the MoveNet model
 movenet_model = load_model()
 
 # Initialize the webcam feed
 cap = cv2.VideoCapture(0)
+webcam_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+webcam_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# Initialize pygame and create game window
+pygame.init()
+screen_width = 1080
+screen_height = int(screen_width * (webcam_height / webcam_width))
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+pygame.display.set_caption("Hand-Hit Dots Game")
+
+
+
 
 # Define game variables and settings
 clock = pygame.time.Clock()
@@ -46,6 +50,7 @@ while running:
     ret, frame = cap.read()
     if not ret:
         break
+    frame = cv2.flip(frame, 1)
 
     # Preprocess the frame and run inference
     input_image = preprocess_image(frame)
@@ -56,12 +61,14 @@ while running:
     hand_keypoints = get_hand_keypoints(keypoints_with_scores)
 
     # Map hand keypoint coordinates to game screen coordinates
+# Map hand keypoint coordinates to game screen coordinates
     screen_hand_keypoints = {}
     for key, point in hand_keypoints.items():
         y, x = point
-        screen_x = int(x * screen_width)
-        screen_y = int(y * screen_height)
+        screen_x = int(( y) * screen_width)
+        screen_y = int(x * screen_height)
         screen_hand_keypoints[key] = (screen_x, screen_y)
+
 
     # Check for collision between hand keypoints and the dot
     if dot.check_collision(screen_hand_keypoints):
