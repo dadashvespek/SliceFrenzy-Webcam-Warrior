@@ -178,7 +178,7 @@ class SlicedFruit:
         return self.y1 > screen_height or self.y2 > screen_height
 
 class HandKeyPoint:
-    def __init__(self, x, y, speed=0.2):
+    def __init__(self, x, y, speed=0.3):
         self.x = x
         self.y = y
         self.speed = speed

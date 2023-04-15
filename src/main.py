@@ -18,7 +18,7 @@ webcam_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 # Initialize pygame and create game window
 pygame.init()
-screen_width = 1080
+screen_width = 900
 screen_height = int(screen_width * (webcam_height / webcam_width))
 screen = pygame.display.set_mode((screen_width, screen_height))
 

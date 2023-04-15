@@ -4,8 +4,8 @@ import tensorflow as tf
 import tensorflow_hub as hub
 
 # Load the MoveNet model
-module = hub.load("https://tfhub.dev/google/movenet/singlepose/lightning/4")
-input_size = 192
+module = hub.load("https://tfhub.dev/google/movenet/singlepose/thunder/4")
+input_size = 256
 
 def load_model():
     return module.signatures['serving_default']
@@ -23,7 +23,7 @@ def run_inference(model, input_image):
     keypoints_with_scores = outputs
     return keypoints_with_scores
 
-def get_hand_keypoints(keypoints_with_scores, keypoint_threshold=0.11):
+def get_hand_keypoints(keypoints_with_scores, keypoint_threshold=0.05):
     hand_keypoints = {}
     # Left wrist
     left_wrist = keypoints_with_scores[0, 0, 9, :]
