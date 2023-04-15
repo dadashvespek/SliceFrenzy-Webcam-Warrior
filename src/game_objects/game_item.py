@@ -188,14 +188,30 @@ class HandKeyPoint:
         self.y = y
         self.speed = speed
 
+        self.sword_image = pygame.image.load("assets/images/sword1.png")
+        self.scale_factor = 1
+
     def update_position(self, target_x, target_y):
         dx = target_x - self.x
         dy = target_y - self.y
         self.x += dx * self.speed
         self.y += dy * self.speed
 
-    def draw(self, screen, radius=10, color=(0, 255, 0)):
-        pygame.draw.circle(screen, color, (int(self.x), int(self.y)), radius)
+    def draw(self, screen):
+        scaled_sword_image = pygame.transform.scale(
+            self.sword_image,
+            (
+                int(self.sword_image.get_width() * self.scale_factor),
+                int(self.sword_image.get_height() * self.scale_factor),
+            ),
+        )
+        screen.blit(
+            scaled_sword_image,
+            (
+                int(self.x - scaled_sword_image.get_width() // 2),
+                int(self.y - scaled_sword_image.get_height() // 2),
+            ),
+        )
 
 import time
 
