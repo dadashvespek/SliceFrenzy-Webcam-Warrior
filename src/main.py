@@ -18,7 +18,7 @@ webcam_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 # Initialize pygame and create game window
 pygame.init()
-screen_width = 900
+screen_width = 850
 screen_height = int(screen_width * (webcam_height / webcam_width))
 screen = pygame.display.set_mode((screen_width, screen_height))
 
@@ -41,10 +41,10 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 
 # Game settings and variables
 clock = pygame.time.Clock()
-FPS = 30
+FPS = 60
 score = 0
 lives = 30
-game_item_timer = 1000
+game_item_timer = 4000
 game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
 
@@ -104,9 +104,7 @@ while running:
     for game_item in game_items:
         game_item.update_position()
         game_item.render()
-
         # Check for collision between hand keypoints and the game item
-    # Check for collision between hand keypoints and the game item
         if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
             result, sliced = game_item.apply_effect()
 
