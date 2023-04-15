@@ -1,7 +1,8 @@
 import pygame
 import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
-from game_objects.dot import Dot
+from game_objects.game_item import GameItem
+import random
 
 # Initialize the MoveNet model
 movenet_model = load_model()
@@ -17,7 +18,7 @@ screen_width = 1080
 screen_height = int(screen_width * (webcam_height / webcam_width))
 screen = pygame.display.set_mode((screen_width, screen_height))
 
-pygame.display.set_caption("Hand-Hit Dots Game")
+pygame.display.set_caption("Fruit Ninja Game")
 
 # Load assets
 font_path = "assets/fonts/custom_font.ttf"
@@ -29,19 +30,21 @@ pygame.mixer.music.load(bg_music_path)
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1)
 
-hit_sound_path = "assets/sounds/hit_sound.wav"
-hit_sound = pygame.mixer.Sound(hit_sound_path)
+# Load background image
+bg_image_path = "assets/images/background.png"
+bg_image = pygame.image.load(bg_image_path)
+bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 
-# Define game variables and settings
+# Game settings and variables
 clock = pygame.time.Clock()
 FPS = 30
 score = 0
-dot_timer = 9000
-dot_event = pygame.USEREVENT + 1
-pygame.time.set_timer(dot_event, dot_timer)
+lives = 30
+game_item_timer = 1000
+game_item_event = pygame.USEREVENT + 1
+pygame.time.set_timer(game_item_event, game_item_timer)
 
-# Create an initial dot
-dot = Dot(screen, screen_width, screen_height)
+game_items = []
 
 def draw_hand_keypoints(screen, hand_keypoints, radius=5, color=(0, 255, 0)):
     for keypoint in hand_keypoints.values():
@@ -55,8 +58,11 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == dot_event:
-            dot = Dot(screen, screen_width, screen_height)
+        if event.type == game_item_event:
+            # Randomly generate game items (fruits or bombs)
+            item_type = random.choice(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"])
+            game_item = GameItem(screen, screen_width, screen_height, item_type)
+            game_items.append(game_item)
 
     # Capture webcam frame and run MoveNet inference
     ret, frame = cap.read()
@@ -66,7 +72,6 @@ while running:
 
     # Preprocess the frame and run inference
     input_image = preprocess_image(frame)
-
     keypoints_with_scores = run_inference(movenet_model, input_image)
 
     # Get hand keypoint coordinates
@@ -80,32 +85,50 @@ while running:
         screen_y = int(x * screen_height)
         screen_hand_keypoints[key] = (screen_x, screen_y)
 
-    # Check for collision between hand keypoints and the dot
-    if dot.check_collision(screen_hand_keypoints):
-        score += 1
-        hit_sound.play()  # Play hit sound effect
-        dot = Dot(screen, screen_width, screen_height)
-
     # Clear the screen
-    screen.fill((0, 0, 0))
+    screen.blit(bg_image, (0, 0))
 
-    # Render the dot
-    dot.render()
+    # Update and render game items
+    for game_item in game_items:
+        game_item.update_position()
+        game_item.render()
+
+        # Check for collision between hand keypoints and the game item
+        if game_item.check_collision(screen_hand_keypoints):
+            result = game_item.apply_effect()
+
+            if result == "fruit":
+                score += 1
+            elif result == "bomb":
+                lives -= 1
+
+            game_items.remove(game_item)
+
+        # Remove game items that are out of bounds
+        if game_item.out_of_bounds():
+            game_items.remove(game_item)
+
     # Draw hand keypoints
     draw_hand_keypoints(screen, screen_hand_keypoints)
 
-    # Display the score
-    text = custom_font.render(f"Score: {score}", 1, (255, 255, 255))
-    screen.blit(text, (10, 10))
+    # Display the score and lives
+    score_text = custom_font.render(f"Score: {score}", 1, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
+    lives_text = custom_font.render(f"Lives: {lives}", 1, (255, 255, 255))
+    screen.blit(lives_text, (screen_width - 200, 10))
 
     # Update the screen
     pygame.display.flip()
+
+    # Check for game over
+    if lives <= 0:
+        running = False
 
     # Limit the frame rate
     clock.tick(FPS)
 
 # Release resources
-# Release resources and exit the game
 cap.release()
 pygame.mixer.music.stop()
 pygame.quit()
+
