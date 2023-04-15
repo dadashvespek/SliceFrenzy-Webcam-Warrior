@@ -3,6 +3,32 @@ import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
 from game_objects.game_item import GameItem, HandKeyPoint
 
+def save_high_scores(high_scores, file_name="high_scores.txt"):
+    with open(file_name, "w") as file:
+        for score in high_scores:
+            file.write(f"{score}\n")
+def load_high_scores(file_name="high_scores.txt"):
+    try:
+        with open(file_name, "r") as file:
+            scores = [int(line.strip()) for line in file.readlines()]
+    except FileNotFoundError:
+        scores = []
+
+    return scores
+def display_high_scores(screen, high_scores, font, color=(255, 255, 255)):
+    x = screen.get_width() // 2
+    y = screen.get_height() // 4
+
+    title_text = font.render("High Scores", True, color)
+    title_rect = title_text.get_rect(center=(x, y))
+    screen.blit(title_text, title_rect)
+
+    for i, score in enumerate(high_scores, 1):
+        y += font.get_height() * 1.5
+        score_text = font.render(f"{i}. {score}", True, color)
+        score_rect = score_text.get_rect(center=(x, y))
+        screen.blit(score_text, score_rect)
+
 import random
 sliced_fruits = []
 
@@ -43,7 +69,7 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 clock = pygame.time.Clock()
 FPS = 120
 score = 0
-lives = 30
+lives = 1
 game_item_timer = 4000
 game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
@@ -155,6 +181,16 @@ while running:
     # Check for game over
     if lives <= 0:
         running = False
+        high_scores = load_high_scores()
+        high_scores.append(score)
+        high_scores.sort(reverse=True)
+        high_scores = high_scores[:5]  # Keep only the top 5 scores
+        save_high_scores(high_scores)
+        pygame.font.init()
+        display_high_scores(screen, high_scores, custom_font, color=(0, 0, 0))
+        pygame.display.flip()
+        pygame.time.wait(3000)
+
 
     # Limit the frame rate
     clock.tick(FPS)
