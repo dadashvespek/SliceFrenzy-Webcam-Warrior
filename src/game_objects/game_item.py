@@ -114,17 +114,14 @@ class GameItem:
 
     def check_collision(self, hand_keypoints, collision_distance=30):
         # Check for collision between hand keypoints and the game item
-        for keypoint in hand_keypoints.values():
-            x, y = keypoint
+        for keypoint in hand_keypoints:
+            x, y = int(keypoint.x), int(keypoint.y)  # Get x and y from the HandKeyPoint object
             scaled_width = int(self.main_image.get_width() * self.scale_factor)
             scaled_height = int(self.main_image.get_height() * self.scale_factor)
             distance = ((self.x + scaled_width // 2 - x) ** 2 + (self.y + scaled_height // 2 - y) ** 2) ** 0.5
 
             if distance <= collision_distance:
                 return True
-
-        return False
-
 
         return False
 
@@ -135,18 +132,62 @@ class GameItem:
         if self.item_type == "bomb":
             # Render the explosion image in place of the bomb
             self.screen.blit(self.explosion_image, (self.x, self.y))
-            return "bomb"
+            return "bomb", None
 
         else:
-            # Render the sliced fruit images with the scale factor applied
-            scaled_half_1_image = pygame.transform.scale(self.half_1_image, (int(self.half_1_image.get_width() * self.scale_factor), int(self.half_1_image.get_height() * self.scale_factor)))
-            scaled_half_2_image = pygame.transform.scale(self.half_2_image, (int(self.half_2_image.get_width() * self.scale_factor), int(self.half_2_image.get_height() * self.scale_factor)))
+            sliced_fruit = SlicedFruit(self.screen, self.x, self.y, self.half_1_image, self.half_2_image, self.scale_factor)
+            return "fruit", sliced_fruit
 
-            self.screen.blit(scaled_half_1_image, (self.x, self.y))
-            self.screen.blit(scaled_half_2_image, (self.x, self.y))
-            return "fruit"
 
     def out_of_bounds(self):
         # Check if the game item is out of bounds
         return self.x < -self.main_image.get_width() or self.x > self.screen_width or self.y > self.screen_height
 
+class SlicedFruit:
+    def __init__(self, screen, x, y, half_1_image, half_2_image, scale_factor):
+        self.screen = screen
+        self.x1, self.y1 = x, y
+        self.x2, self.y2 = x, y
+        self.half_1_image = half_1_image
+        self.half_2_image = half_2_image
+        self.scale_factor = scale_factor
+
+        self.x_speed1 = random.uniform(-1, 1)
+        self.y_speed1 = random.uniform(-3, -1)
+        self.x_speed2 = random.uniform(-1, 1)
+        self.y_speed2 = random.uniform(-3, -1)
+
+    def update_position(self, screen_height):
+        self.x1 += self.x_speed1
+        self.y1 += self.y_speed1
+        self.x2 += self.x_speed2
+        self.y2 += self.y_speed2
+
+        # Apply gravity
+        self.y_speed1 += screen_height * 0.0005
+        self.y_speed2 += screen_height * 0.0005
+
+    def render(self):
+        scaled_half_1_image = pygame.transform.scale(self.half_1_image, (int(self.half_1_image.get_width() * self.scale_factor), int(self.half_1_image.get_height() * self.scale_factor)))
+        scaled_half_2_image = pygame.transform.scale(self.half_2_image, (int(self.half_2_image.get_width() * self.scale_factor), int(self.half_2_image.get_height() * self.scale_factor)))
+
+        self.screen.blit(scaled_half_1_image, (self.x1, self.y1))
+        self.screen.blit(scaled_half_2_image, (self.x2, self.y2))
+
+    def out_of_bounds(self, screen_height):
+        return self.y1 > screen_height or self.y2 > screen_height
+
+class HandKeyPoint:
+    def __init__(self, x, y, speed=0.2):
+        self.x = x
+        self.y = y
+        self.speed = speed
+
+    def update_position(self, target_x, target_y):
+        dx = target_x - self.x
+        dy = target_y - self.y
+        self.x += dx * self.speed
+        self.y += dy * self.speed
+
+    def draw(self, screen, radius=10, color=(0, 255, 0)):
+        pygame.draw.circle(screen, color, (int(self.x), int(self.y)), radius)

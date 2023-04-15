@@ -1,8 +1,12 @@
 import pygame
 import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
-from game_objects.game_item import GameItem
+from game_objects.game_item import GameItem, HandKeyPoint
+
 import random
+sliced_fruits = []
+
+
 
 # Initialize the MoveNet model
 movenet_model = load_model()
@@ -46,14 +50,17 @@ pygame.time.set_timer(game_item_event, game_item_timer)
 
 game_items = []
 
-def draw_hand_keypoints(screen, hand_keypoints, radius=5, color=(0, 255, 0)):
-    for keypoint in hand_keypoints.values():
-        x, y = keypoint
-        pygame.draw.circle(screen, color, (x, y), radius)
+def draw_hand_keypoints(screen, hand_keypoints):
+    for keypoint in hand_keypoints:
+        keypoint.draw(screen)
+
+left_hand_keypoint = HandKeyPoint(screen_width // 2, screen_height // 2)
+right_hand_keypoint = HandKeyPoint(screen_width // 2, screen_height // 2)
 
 # Main game loop
 running = True
 while running:
+
     # Event handling loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -81,9 +88,14 @@ while running:
     screen_hand_keypoints = {}
     for key, point in hand_keypoints.items():
         y, x = point
-        screen_x = int((y) * screen_width)
+        screen_x = int(y * screen_width)
         screen_y = int(x * screen_height)
         screen_hand_keypoints[key] = (screen_x, screen_y)
+        if key == "left_wrist":
+            left_hand_keypoint.update_position(screen_x, screen_y)
+        elif key == "right_wrist":
+            right_hand_keypoint.update_position(screen_x, screen_y)
+
 
     # Clear the screen
     screen.blit(bg_image, (0, 0))
@@ -94,22 +106,35 @@ while running:
         game_item.render()
 
         # Check for collision between hand keypoints and the game item
-        if game_item.check_collision(screen_hand_keypoints):
-            result = game_item.apply_effect()
+    # Check for collision between hand keypoints and the game item
+        if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
+            result, sliced = game_item.apply_effect()
 
             if result == "fruit":
                 score += 1
+                if sliced:
+                    sliced_fruits.append(sliced)
             elif result == "bomb":
                 lives -= 1
 
             game_items.remove(game_item)
 
+
+
         # Remove game items that are out of bounds
         if game_item.out_of_bounds():
             game_items.remove(game_item)
 
+    for sliced_fruit in sliced_fruits[:]:
+        sliced_fruit.update_position(screen_height)
+        sliced_fruit.render()
+
+        if sliced_fruit.out_of_bounds(screen_height):
+            sliced_fruits.remove(sliced_fruit)
     # Draw hand keypoints
-    draw_hand_keypoints(screen, screen_hand_keypoints)
+    draw_hand_keypoints(screen, [left_hand_keypoint, right_hand_keypoint])
+
+
 
     # Display the score and lives
     score_text = custom_font.render(f"Score: {score}", 1, (255, 255, 255))
