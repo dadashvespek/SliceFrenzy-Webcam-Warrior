@@ -116,10 +116,15 @@ class GameItem:
         # Check for collision between hand keypoints and the game item
         for keypoint in hand_keypoints.values():
             x, y = keypoint
-            distance = ((self.x + self.main_image.get_width() // 2 - x) ** 2 + (self.y + self.main_image.get_height() // 2 - y) ** 2) ** 0.5
+            scaled_width = int(self.main_image.get_width() * self.scale_factor)
+            scaled_height = int(self.main_image.get_height() * self.scale_factor)
+            distance = ((self.x + scaled_width // 2 - x) ** 2 + (self.y + scaled_height // 2 - y) ** 2) ** 0.5
 
             if distance <= collision_distance:
                 return True
+
+        return False
+
 
         return False
 
