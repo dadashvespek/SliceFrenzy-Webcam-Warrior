@@ -33,4 +33,13 @@ def get_hand_keypoints(keypoints_with_scores, keypoint_threshold=0.11):
     right_wrist = keypoints_with_scores[0, 0, 10, :]
     if right_wrist[2] > keypoint_threshold:
         hand_keypoints['right_wrist'] = (right_wrist[1], right_wrist[0])
+    # Left elbow
+    left_elbow = keypoints_with_scores[0, 0, 7, :]
+    if left_elbow[2] > keypoint_threshold:
+        hand_keypoints['left_elbow'] = (left_elbow[1], left_elbow[0])
+    # Right elbow
+    right_elbow = keypoints_with_scores[0, 0, 8, :]
+    if right_elbow[2] > keypoint_threshold:
+        hand_keypoints['right_elbow'] = (right_elbow[1], right_elbow[0])
     return hand_keypoints
+

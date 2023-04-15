@@ -3,6 +3,7 @@ import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
 from game_objects.game_item import GameItem
 import random
+import numpy as np
 
 # Initialize the MoveNet model
 movenet_model = load_model()
@@ -45,6 +46,20 @@ game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
 
 game_items = []
+# Load sword image
+sword_image_path = "assets/images/sword.png"
+sword_image = pygame.image.load(sword_image_path)
+sword_image = pygame.transform.scale(sword_image, (int(sword_image.get_width() * 0.1), int(sword_image.get_height() * 0.1)))
+
+
+def draw_sword(screen, elbow, wrist):
+    dx, dy = wrist[0] - elbow[0], wrist[1] - elbow[1]
+    angle = np.arctan2(dy, dx) * 180 / np.pi
+    distance = np.sqrt(dx ** 2 + dy ** 2)
+    scaled_sword = pygame.transform.scale(sword_image, (int(distance), sword_image.get_height()))
+    rotated_sword = pygame.transform.rotate(scaled_sword, -angle)
+    sword_rect = rotated_sword.get_rect(center=elbow)
+    screen.blit(rotated_sword, sword_rect.topleft)
 
 def draw_hand_keypoints(screen, hand_keypoints, radius=5, color=(0, 255, 0)):
     for keypoint in hand_keypoints.values():
@@ -110,6 +125,12 @@ while running:
 
     # Draw hand keypoints
     draw_hand_keypoints(screen, screen_hand_keypoints)
+    # Draw swords
+    if 'left_elbow' in screen_hand_keypoints and 'left_wrist' in screen_hand_keypoints:
+        draw_sword(screen, screen_hand_keypoints['left_elbow'], screen_hand_keypoints['left_wrist'])
+    if 'right_elbow' in screen_hand_keypoints and 'right_wrist' in screen_hand_keypoints:
+        draw_sword(screen, screen_hand_keypoints['right_elbow'], screen_hand_keypoints['right_wrist'])
+
 
     # Display the score and lives
     score_text = custom_font.render(f"Score: {score}", 1, (255, 255, 255))
