@@ -6,20 +6,20 @@ from game_objects.game_item import GameItem, HandKeyPoint
 import random
 sliced_fruits = []
 
-
+active_splash_effects = []
 
 # Initialize the MoveNet model
 movenet_model = load_model()
 
 # Initialize the webcam feed
 cap = cv2.VideoCapture(0)
-webcam_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-webcam_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+webcam_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)*1.5)
+webcam_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)*1.5)
 
 # Initialize pygame and create game window
 pygame.init()
-screen_width = 850
-screen_height = int(screen_width * (webcam_height / webcam_width))
+screen_width = webcam_width
+screen_height = int(webcam_height)
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 pygame.display.set_caption("Fruit Ninja Game")
@@ -41,7 +41,7 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 
 # Game settings and variables
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 120
 score = 0
 lives = 30
 game_item_timer = 4000
@@ -106,9 +106,10 @@ while running:
         game_item.render()
         # Check for collision between hand keypoints and the game item
         if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
-            result, sliced = game_item.apply_effect()
+            result, sliced, splash_effect = game_item.apply_effect()
 
             if result == "fruit":
+                active_splash_effects.append(splash_effect)
                 score += 1
                 if sliced:
                     sliced_fruits.append(sliced)
@@ -122,6 +123,10 @@ while running:
         # Remove game items that are out of bounds
         if game_item.out_of_bounds():
             game_items.remove(game_item)
+    for splash_effect in active_splash_effects:
+        should_keep = splash_effect.render()
+        if not should_keep:
+            active_splash_effects.remove(splash_effect)
 
     for sliced_fruit in sliced_fruits[:]:
         sliced_fruit.update_position(screen_height)
@@ -129,6 +134,10 @@ while running:
 
         if sliced_fruit.out_of_bounds(screen_height):
             sliced_fruits.remove(sliced_fruit)
+
+
+
+
     # Draw hand keypoints
     draw_hand_keypoints(screen, [left_hand_keypoint, right_hand_keypoint])
 

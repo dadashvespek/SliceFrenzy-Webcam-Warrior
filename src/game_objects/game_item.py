@@ -132,11 +132,16 @@ class GameItem:
         if self.item_type == "bomb":
             # Render the explosion image in place of the bomb
             self.screen.blit(self.explosion_image, (self.x, self.y))
-            return "bomb", None
+            return "bomb", None, None
 
         else:
+            scaled_width = int(self.main_image.get_width() * self.scale_factor)
+            scaled_height = int(self.main_image.get_height() * self.scale_factor)
+            splash_image_path = self.splash_images[self.item_type]
+            splash_image = pygame.image.load(splash_image_path)
+            splash_effect = SplashEffect(self.screen, self.x, self.y, splash_image, self.scale_factor)
             sliced_fruit = SlicedFruit(self.screen, self.x, self.y, self.half_1_image, self.half_2_image, self.scale_factor)
-            return "fruit", sliced_fruit
+            return "fruit", sliced_fruit, splash_effect
 
 
     def out_of_bounds(self):
@@ -191,3 +196,42 @@ class HandKeyPoint:
 
     def draw(self, screen, radius=10, color=(0, 255, 0)):
         pygame.draw.circle(screen, color, (int(self.x), int(self.y)), radius)
+
+import time
+
+class SplashEffect:
+    def __init__(self, screen, x, y, splash_image, scale_factor, duration=3):
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.splash_image = splash_image
+        self.scale_factor = scale_factor
+        self.start_time = time.time()
+        self.duration = duration
+        # Create a list of splash sound file names
+        splash_sound_filenames = [
+            "assets/sounds/splash_sound1.mp3",
+            "assets/sounds/splash_sound2.mp3",
+            "assets/sounds/splash_sound3.mp3",
+            "assets/sounds/splash_sound4.mp3"
+        ]
+
+        # Load a random splash sound effect
+        chosen_splash_sound = random.choice(splash_sound_filenames)
+        self.splash_sound = pygame.mixer.Sound(chosen_splash_sound)
+
+        # Play the randomly chosen splash sound effect
+        self.splash_sound.play()
+
+
+    def render(self):
+        elapsed_time = time.time() - self.start_time
+        if elapsed_time < self.duration:
+            transparency = int((1 - (elapsed_time / self.duration)) * 255)
+            scaled_splash_image = pygame.transform.scale(self.splash_image, (int(self.splash_image.get_width() * self.scale_factor), int(self.splash_image.get_height() * self.scale_factor)))
+            splash_image_copy = scaled_splash_image.copy()
+            splash_image_copy.fill((255, 255, 255, transparency), special_flags=pygame.BLEND_RGBA_MULT)
+            self.screen.blit(splash_image_copy, (self.x, self.y))
+        else:
+            return False
+        return True
