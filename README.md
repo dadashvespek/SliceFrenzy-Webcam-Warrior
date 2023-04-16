@@ -14,3 +14,4 @@ and then:
 Python src/main.py
 ```
 
+# The first time you load the game may take a lot of time as it needs to load the movenet model 
