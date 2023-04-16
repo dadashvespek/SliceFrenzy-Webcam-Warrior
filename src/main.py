@@ -70,7 +70,7 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 clock = pygame.time.Clock()
 FPS = 200
 score = 0
-lives = 1
+lives = 3
 game_item_timer = 2000
 game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
@@ -128,8 +128,8 @@ running = True
 while running:
     if tutorial_done and not game_paused:
         # Increase difficulty every 5 seconds
-        if pygame.time.get_ticks() - difficulty_timer >= 5000:
-            GameItem.difficulty_multiplier += 0.05
+        if pygame.time.get_ticks() - difficulty_timer >= 4000:
+            GameItem.difficulty_multiplier += 0.03
             # Cap on difficulty
             GameItem.difficulty_multiplier = min(GameItem.difficulty_multiplier, 1.7)
             
@@ -146,7 +146,7 @@ while running:
             running = False
         if tutorial_done and not game_paused and event.type == game_item_event:
             # Randomly generate game items (fruits or bombs)
-            item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[10, 10, 10, 10, 10, 10, 11*GameItem.difficulty_multiplier], k=1)[0]
+            item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[10, 10, 10, 10, 10, 10, 10*GameItem.difficulty_multiplier], k=1)[0]
             game_item = GameItem(screen, screen_width, screen_height, item_type, GameItem.difficulty_multiplier)
             game_items.append(game_item)
 

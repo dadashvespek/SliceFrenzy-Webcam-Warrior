@@ -75,7 +75,7 @@ class GameItem:
         image_folder = "assets/images"
 
         if self.item_type != "bomb":
-            main_image_path = os.path.join(image_folder, f"{self.item_type}.png")
+            main_image_path = os.path.join(image_folder, f"{self.item_type}_small.png")
             half_1_path, half_2_path = self.half_images[self.item_type]
             
             self.main_image = pygame.image.load(main_image_path)
