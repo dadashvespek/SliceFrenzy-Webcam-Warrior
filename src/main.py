@@ -70,7 +70,7 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 clock = pygame.time.Clock()
 FPS = 200
 score = 0
-lives = 1
+lives = 3
 game_item_timer = 2000
 game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
@@ -120,7 +120,7 @@ left_tutorial_done = False
 right_tutorial_done = False
 left_tutorial_button = Button(screen_center_x - 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'left_tutorial_done', True), hover_duration=5, text="Left Hand")
 right_tutorial_button = Button(screen_center_x + 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'right_tutorial_done', True), hover_duration=5, text="Right Hand")
-tutorial_done = False
+tutorial_done = True
 
 difficulty_timer = pygame.time.get_ticks()
 # Main game loop
@@ -128,7 +128,7 @@ running = True
 while running:
     if tutorial_done and not game_paused:
         # Increase difficulty every 5 seconds
-        if pygame.time.get_ticks() - difficulty_timer >= 5000:
+        if pygame.time.get_ticks() - difficulty_timer >= 7000:
             GameItem.difficulty_multiplier += 0.05
             # Cap on difficulty
             GameItem.difficulty_multiplier = min(GameItem.difficulty_multiplier, 1.7)
@@ -138,7 +138,6 @@ while running:
 
             # Reset game_item_event timer
             pygame.time.set_timer(game_item_event, game_item_timer)
-            print(f"Difficulty increased to {GameItem.difficulty_multiplier}x")
             difficulty_timer = pygame.time.get_ticks()
 
     for event in pygame.event.get():
@@ -146,7 +145,7 @@ while running:
             running = False
         if tutorial_done and not game_paused and event.type == game_item_event:
             # Randomly generate game items (fruits or bombs)
-            item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[10, 10, 10, 10, 10, 10, 11*GameItem.difficulty_multiplier], k=1)[0]
+            item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[0, 0, 0, 99, 0, 9, 1*GameItem.difficulty_multiplier], k=1)[0]
             game_item = GameItem(screen, screen_width, screen_height, item_type, GameItem.difficulty_multiplier)
             game_items.append(game_item)
 

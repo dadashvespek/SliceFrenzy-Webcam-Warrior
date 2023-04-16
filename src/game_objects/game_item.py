@@ -10,7 +10,7 @@ class GameItem:
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.scale_factor = 0.1
+        self.scale_factor = 1
         self.difficulty_multiplier = difficulty_multiplier
         # Setup image paths
         self.item_images = {
@@ -29,7 +29,7 @@ class GameItem:
             "banana": "assets/images/splash_yellow.png",
             "coconut": "assets/images/splash_transparent.png",
             "orange": "assets/images/splash_orange.png",
-            "pineapple": "assets/images/splash_transparent.png",
+            "pineapple": "assets/images/splash_yellow.png",
             "watermelon": "assets/images/splash_red.png"
         }
 
@@ -183,9 +183,9 @@ class SlicedFruit:
         self.y_speed2 += screen_height * 0.0015
 
     def render(self):
-        scaled_half_1_image = pygame.transform.scale(self.half_1_image, (int(self.half_1_image.get_width() * self.scale_factor), int(self.half_1_image.get_height() * self.scale_factor)))
         scaled_half_2_image = pygame.transform.scale(self.half_2_image, (int(self.half_2_image.get_width() * self.scale_factor), int(self.half_2_image.get_height() * self.scale_factor)))
-
+        scaled_half_1_image = pygame.transform.scale(self.half_1_image, (int(self.half_1_image.get_width() * self.scale_factor), int(self.half_1_image.get_height() * self.scale_factor)))
+        
         self.screen.blit(scaled_half_1_image, (self.x1, self.y1))
         self.screen.blit(scaled_half_2_image, (self.x2, self.y2))
 
