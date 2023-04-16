@@ -10,37 +10,37 @@ class GameItem:
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.scale_factor = 0.1
+        self.scale_factor = 1
         self.difficulty_multiplier = difficulty_multiplier
         # Setup image paths
         self.item_images = {
-            "apple": "assets/images/apple.png",
-            "banana": "assets/images/banana.png",
-            "coconut": "assets/images/coconut.png",
-            "orange": "assets/images/orange.png",
-            "pineapple": "assets/images/pineapple.png",
-            "watermelon": "assets/images/watermelon.png",
-            "bomb": "assets/images/bomb.png"
+            "apple": "assets/images/apple_small.png",
+            "banana": "assets/images/banana_small.png",
+            "coconut": "assets/images/coconut_small.png",
+            "orange": "assets/images/orange_small.png",
+            "pineapple": "assets/images/pineapple_small.png",
+            "watermelon": "assets/images/watermelon_small.png",
+            "bomb": "assets/images/bomb_small.png"
         }
 
         # Setup splash image paths
         self.splash_images = {
-            "apple": "assets/images/splash_red.png",
-            "banana": "assets/images/splash_yellow.png",
-            "coconut": "assets/images/splash_transparent.png",
-            "orange": "assets/images/splash_orange.png",
-            "pineapple": "assets/images/splash_transparent.png",
-            "watermelon": "assets/images/splash_red.png"
+            "apple": "assets/images/splash_red_small.png",
+            "banana": "assets/images/splash_yellow_small.png",
+            "coconut": "assets/images/splash_transparent_small.png",
+            "orange": "assets/images/splash_orange_small.png",
+            "pineapple": "assets/images/splash_yellow_small.png",
+            "watermelon": "assets/images/splash_red_small.png"
         }
 
         # Setup half image paths
         self.half_images = {
-            "apple": ["assets/images/apple_half_1.png", "assets/images/apple_half_2.png"],
-            "banana": ["assets/images/banana_half_1.png", "assets/images/banana_half_2.png"],
-            "coconut": ["assets/images/coconut_half_1.png", "assets/images/coconut_half_2.png"],
-            "orange": ["assets/images/orange_half_1.png", "assets/images/orange_half_2.png"],
-            "pineapple": ["assets/images/pineapple_half_1.png", "assets/images/pineapple_half_2.png"],
-            "watermelon": ["assets/images/watermelon_half_1.png", "assets/images/watermelon_half_2.png"]
+            "apple": ["assets/images/apple_half_1_small.png", "assets/images/apple_half_2_small.png"],
+            "banana": ["assets/images/banana_half_1_small.png", "assets/images/banana_half_2_small.png"],
+            "coconut": ["assets/images/coconut_half_1_small.png", "assets/images/coconut_half_2_small.png"],
+            "orange": ["assets/images/orange_half_1_small.png", "assets/images/orange_half_2_small.png"],
+            "pineapple": ["assets/images/pineapple_half_1_small.png", "assets/images/pineapple_half_2_small.png"],
+            "watermelon": ["assets/images/watermelon_half_1_small.png", "assets/images/watermelon_half_2_small.png"]
         }
         
 
