@@ -120,7 +120,7 @@ left_tutorial_done = False
 right_tutorial_done = False
 left_tutorial_button = Button(screen_center_x - 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'left_tutorial_done', True), hover_duration=5, text="Left Hand")
 right_tutorial_button = Button(screen_center_x + 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'right_tutorial_done', True), hover_duration=5, text="Right Hand")
-tutorial_done = True
+tutorial_done = False
 
 difficulty_timer = pygame.time.get_ticks()
 # Main game loop
@@ -149,6 +149,7 @@ while running:
             item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[10, 10, 10, 10, 10, 10, 11*GameItem.difficulty_multiplier], k=1)[0]
             game_item = GameItem(screen, screen_width, screen_height, item_type, GameItem.difficulty_multiplier)
             game_items.append(game_item)
+
     # Capture webcam frame and run MoveNet inference
     ret, frame = cap.read()
     if not ret:
