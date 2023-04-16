@@ -68,11 +68,11 @@ bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
 
 # Game settings and variables
 clock = pygame.time.Clock()
-FPS = 120
+FPS = 200
 score = 0
 lives = 1
 game_item_timer = 2000
-game_item_event = pygame.USEREVENT + 2
+game_item_event = pygame.USEREVENT + 1
 pygame.time.set_timer(game_item_event, game_item_timer)
 
 game_items = []
@@ -95,10 +95,10 @@ pause_button_radius = 40
 screen_center_x = screen_width // 2
 screen_center_y = screen_height // 2
 
-pause_button = Button((screen_center_x*2)-150, (screen_center_y//2)-60, pause_button_radius, screen, action=pause_game, text="Pause",font_size=40)
+pause_button = Button((screen_center_x*2)-150, (screen_center_y//2)-60, pause_button_radius, screen, action=pause_game, text="Pause",font_size=30)
 
 def restart_game():
-    global game_paused, score, lives, game_items, active_splash_effects, sliced_fruits
+    global game_paused, score, lives, game_items, active_splash_effects, sliced_fruits,difficulty_multiplier, game_item_timer, game_item_event, difficulty_timer
 
     # Reset game state
     score = 0
@@ -106,6 +106,10 @@ def restart_game():
     game_items = []
     active_splash_effects = []
     sliced_fruits = []
+    GameItem.difficulty_multiplier = 1
+    game_item_timer = 2000
+    game_item_event = pygame.USEREVENT + 1
+    pygame.time.set_timer(game_item_event, game_item_timer)
 
     game_paused = False
 
@@ -116,19 +120,34 @@ left_tutorial_done = False
 right_tutorial_done = False
 left_tutorial_button = Button(screen_center_x - 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'left_tutorial_done', True), hover_duration=5, text="Left Hand")
 right_tutorial_button = Button(screen_center_x + 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'right_tutorial_done', True), hover_duration=5, text="Right Hand")
-tutorial_done = False
+tutorial_done = True
 
-
+difficulty_timer = pygame.time.get_ticks()
 # Main game loop
 running = True
 while running:
+    if tutorial_done and not game_paused:
+        # Increase difficulty every 5 seconds
+        if pygame.time.get_ticks() - difficulty_timer >= 5000:
+            GameItem.difficulty_multiplier += 0.05
+            # Cap on difficulty
+            GameItem.difficulty_multiplier = min(GameItem.difficulty_multiplier, 1.7)
+            
+            # Decrease game_item_timer, with a lower cap
+            game_item_timer = max(game_item_timer - 100, 500)
+
+            # Reset game_item_event timer
+            pygame.time.set_timer(game_item_event, game_item_timer)
+            print(f"Difficulty increased to {GameItem.difficulty_multiplier}x")
+            difficulty_timer = pygame.time.get_ticks()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if tutorial_done and event.type and not game_paused == game_item_event:
+        if tutorial_done and not game_paused and event.type == game_item_event:
             # Randomly generate game items (fruits or bombs)
-            item_type = random.choice(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"])
-            game_item = GameItem(screen, screen_width, screen_height, item_type)
+            item_type = random.choices(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"], weights=[10, 10, 10, 10, 10, 10, 11*GameItem.difficulty_multiplier], k=1)[0]
+            game_item = GameItem(screen, screen_width, screen_height, item_type, GameItem.difficulty_multiplier)
             game_items.append(game_item)
     # Capture webcam frame and run MoveNet inference
     ret, frame = cap.read()
@@ -179,11 +198,11 @@ while running:
             restart_button.draw()
 
         if not game_paused:
-
-        # Update and render game items
+            new_game_items = []
             for game_item in game_items:
                 game_item.update_position()
                 game_item.render()
+
                 # Check for collision between hand keypoints and the game item
                 if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
                     result, sliced, splash_effect = game_item.apply_effect()
@@ -195,27 +214,27 @@ while running:
                             sliced_fruits.append(sliced)
                     elif result == "bomb":
                         lives -= 1
+                else:
+                    if not game_item.out_of_bounds():
+                        new_game_items.append(game_item)
 
-                    game_items.remove(game_item)
-
-            
-
-
-                # Remove game items that are out of bounds
-                if game_item.out_of_bounds():
-                    game_items.remove(game_item)
-
+            game_items = new_game_items
+            new_active_splash_effects = []
             for splash_effect in active_splash_effects:
                 should_keep = splash_effect.render()
-                if not should_keep:
-                    active_splash_effects.remove(splash_effect)
+                if should_keep:
+                    new_active_splash_effects.append(splash_effect)
+            active_splash_effects = new_active_splash_effects
 
-            for sliced_fruit in sliced_fruits[:]:
+            # Update and render sliced fruits
+            new_sliced_fruits = []
+            for sliced_fruit in sliced_fruits:
                 sliced_fruit.update_position(screen_height)
                 sliced_fruit.render()
 
-                if sliced_fruit.out_of_bounds(screen_height):
-                    sliced_fruits.remove(sliced_fruit)
+                if not sliced_fruit.out_of_bounds(screen_height):
+                    new_sliced_fruits.append(sliced_fruit)
+            sliced_fruits = new_sliced_fruits
                 # Display the score and lives
             score_text = custom_font.render(f"Score: {score}", 1, (0, 0, 0))
             screen.blit(score_text, (10, 10))
@@ -250,7 +269,7 @@ while running:
 
 
     # Limit the frame rate
-    #clock.tick(FPS)
+    clock.tick(FPS)
 
 # Release resources
 cap.release()

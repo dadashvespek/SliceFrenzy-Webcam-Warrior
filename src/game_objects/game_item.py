@@ -5,12 +5,13 @@ import math
 import pygame.freetype
 
 class GameItem:
-    def __init__(self, screen, screen_width, screen_height, item_type):
+    difficulty_multiplier = 1.0
+    def __init__(self, screen, screen_width, screen_height, item_type, difficulty_multiplier=1.0):
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.scale_factor = 0.1
-
+        self.difficulty_multiplier = difficulty_multiplier
         # Setup image paths
         self.item_images = {
             "apple": "assets/images/apple.png",
@@ -41,6 +42,7 @@ class GameItem:
             "pineapple": ["assets/images/pineapple_half_1.png", "assets/images/pineapple_half_2.png"],
             "watermelon": ["assets/images/watermelon_half_1.png", "assets/images/watermelon_half_2.png"]
         }
+        
 
         if item_type in ["fruit_1", "fruit_2", "fruit_3"]:
             self.item_type = random.choice(list(self.item_images.keys()))
@@ -54,12 +56,18 @@ class GameItem:
         self.image = pygame.image.load(self.image_path)
 
         self.rect = self.image.get_rect()
-        self.rect.x = random.randint(0, screen_width - self.rect.width)
+        
+        # Calculate the scaled width of the fruit image
+        scaled_width = int(self.image.get_width() * self.scale_factor)
+
+        # Use the scaled_width to calculate the random x position
+        self.rect.x = random.randint(0, screen_width - scaled_width)
         self.rect.y = screen_height
         self.x = self.rect.x
         self.y = self.rect.y
         self.x_speed = random.randint(-3, 3)
-        self.y_speed = random.randint(-25, -18)
+        self.y_speed = random.randint(-23, -18) * self.difficulty_multiplier
+
 
     def load_images(self):
         # Load the main image and its corresponding sliced images or explosion image
@@ -107,14 +115,14 @@ class GameItem:
         self.y = self.rect.y
 
         # Apply gravity
-        self.y_speed += self.screen_height * 0.0005
+        self.y_speed += self.screen_height * 0.001 * self.difficulty_multiplier
 
     def render(self):
         # Render the game item on the screen
         scaled_image = pygame.transform.scale(self.main_image, (int(self.main_image.get_width() * self.scale_factor), int(self.main_image.get_height() * self.scale_factor)))
         self.screen.blit(scaled_image, (self.x, self.y))
 
-    def check_collision(self, hand_keypoints, collision_distance=30):
+    def check_collision(self, hand_keypoints, collision_distance=50):
         # Check for collision between hand keypoints and the game item
         for keypoint in hand_keypoints:
             x, y = int(keypoint.x), int(keypoint.y)  # Get x and y from the HandKeyPoint object
@@ -171,8 +179,8 @@ class SlicedFruit:
         self.y2 += self.y_speed2
 
         # Apply gravity
-        self.y_speed1 += screen_height * 0.0005
-        self.y_speed2 += screen_height * 0.0005
+        self.y_speed1 += screen_height * 0.0015
+        self.y_speed2 += screen_height * 0.0015
 
     def render(self):
         scaled_half_1_image = pygame.transform.scale(self.half_1_image, (int(self.half_1_image.get_width() * self.scale_factor), int(self.half_1_image.get_height() * self.scale_factor)))
@@ -185,13 +193,13 @@ class SlicedFruit:
         return self.y1 > screen_height or self.y2 > screen_height
 
 class HandKeyPoint:
-    def __init__(self, x, y, speed=0.3):
+    def __init__(self, x, y, speed=0.6):
         self.x = x
         self.y = y
         self.speed = speed
 
         self.sword_image = pygame.image.load("assets/images/sword1.png")
-        self.scale_factor = 1
+        self.scale_factor = 0.8
 
     def update_position(self, target_x, target_y):
         dx = target_x - self.x
