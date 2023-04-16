@@ -1,7 +1,7 @@
 import pygame
 import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
-from game_objects.game_item import GameItem, HandKeyPoint
+from game_objects.game_item import GameItem, HandKeyPoint, Button
 
 def save_high_scores(high_scores, file_name="high_scores.txt"):
     with open(file_name, "w") as file:
@@ -70,8 +70,8 @@ clock = pygame.time.Clock()
 FPS = 120
 score = 0
 lives = 1
-game_item_timer = 4000
-game_item_event = pygame.USEREVENT + 1
+game_item_timer = 2000
+game_item_event = pygame.USEREVENT + 2
 pygame.time.set_timer(game_item_event, game_item_timer)
 
 game_items = []
@@ -83,9 +83,45 @@ def draw_hand_keypoints(screen, hand_keypoints):
 left_hand_keypoint = HandKeyPoint(screen_width // 2, screen_height // 2)
 right_hand_keypoint = HandKeyPoint(screen_width // 2, screen_height // 2)
 
+game_paused = False
+
+def pause_game():
+    global game_paused
+    game_paused = not game_paused
+    pause_button.reset()
+
+pause_button_radius = 30
+screen_center_x = screen_width // 2
+screen_center_y = screen_height // 2
+
+pause_button = Button((screen_center_x*2)-100, (screen_center_y//2)-100, pause_button_radius, screen, action=pause_game, text="Pause")
+
+def restart_game():
+    global game_paused, score, lives, game_items, active_splash_effects, sliced_fruits
+
+    # Reset game state
+    score = 0
+    lives = 3
+    game_items = []
+    active_splash_effects = []
+    sliced_fruits = []
+
+    game_paused = False
+
+restart_button_radius = 30
+restart_button = Button(screen_width // 2, screen_height // 2 + 50, restart_button_radius, screen, action=restart_game, text="Restart")
+
+tutorial_completed = False
+
+# Tutorial buttons
+tutorial_left_button = Button(screen_center_x - 100, screen_center_y, 50, screen, hover_duration=5, text="Left Hand", font_size=30)
+tutorial_right_button = Button(screen_center_x + 100, screen_center_y, 50, screen, hover_duration=5, text="Right Hand", font_size=30)
+
 # Main game loop
 running = True
 while running:
+    # Check for button hover
+
 
     # Event handling loop
     for event in pygame.event.get():
@@ -125,41 +161,49 @@ while running:
 
     # Clear the screen
     screen.blit(bg_image, (0, 0))
+    pause_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+    pause_button.draw()
 
+    if game_paused:
+        restart_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+        restart_button.draw()
+
+    if not game_paused:
     # Update and render game items
-    for game_item in game_items:
-        game_item.update_position()
-        game_item.render()
-        # Check for collision between hand keypoints and the game item
-        if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
-            result, sliced, splash_effect = game_item.apply_effect()
+        for game_item in game_items:
+            game_item.update_position()
+            game_item.render()
+            # Check for collision between hand keypoints and the game item
+            if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
+                result, sliced, splash_effect = game_item.apply_effect()
 
-            if result == "fruit":
-                active_splash_effects.append(splash_effect)
-                score += 1
-                if sliced:
-                    sliced_fruits.append(sliced)
-            elif result == "bomb":
-                lives -= 1
+                if result == "fruit":
+                    active_splash_effects.append(splash_effect)
+                    score += 1
+                    if sliced:
+                        sliced_fruits.append(sliced)
+                elif result == "bomb":
+                    lives -= 1
 
-            game_items.remove(game_item)
+                game_items.remove(game_item)
+
+        
 
 
+            # Remove game items that are out of bounds
+            if game_item.out_of_bounds():
+                game_items.remove(game_item)
+        for splash_effect in active_splash_effects:
+            should_keep = splash_effect.render()
+            if not should_keep:
+                active_splash_effects.remove(splash_effect)
 
-        # Remove game items that are out of bounds
-        if game_item.out_of_bounds():
-            game_items.remove(game_item)
-    for splash_effect in active_splash_effects:
-        should_keep = splash_effect.render()
-        if not should_keep:
-            active_splash_effects.remove(splash_effect)
+        for sliced_fruit in sliced_fruits[:]:
+            sliced_fruit.update_position(screen_height)
+            sliced_fruit.render()
 
-    for sliced_fruit in sliced_fruits[:]:
-        sliced_fruit.update_position(screen_height)
-        sliced_fruit.render()
-
-        if sliced_fruit.out_of_bounds(screen_height):
-            sliced_fruits.remove(sliced_fruit)
+            if sliced_fruit.out_of_bounds(screen_height):
+                sliced_fruits.remove(sliced_fruit)
 
 
 

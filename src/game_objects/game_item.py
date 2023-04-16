@@ -1,6 +1,8 @@
 import pygame
 import os
 import random
+import math
+import pygame.freetype
 
 class GameItem:
     def __init__(self, screen, screen_width, screen_height, item_type):
@@ -251,3 +253,75 @@ class SplashEffect:
         else:
             return False
         return True
+    
+import math
+
+class Button:
+    def __init__(self, x, y, radius, screen, action=None, hover_duration=2, text=None, font_size=20):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.screen = screen
+        self.action = action
+        self.hover_duration = hover_duration
+        self.hover_start_time = None
+        self.hover_progress = 0
+        self.active = False
+        self.text = text
+        self.font = pygame.font.Font(None, font_size)
+
+    def check_hover(self, hand_keypoints, hover_distance=30):
+        any_hand_hovering = False
+        for keypoint in hand_keypoints:
+            x, y = int(keypoint.x), int(keypoint.y)
+            x_diff = abs(self.x - x)
+            y_diff = abs(self.y - y)
+
+            if x_diff <= hover_distance and y_diff <= hover_distance:
+                any_hand_hovering = True
+                if self.hover_start_time is None:
+                    self.hover_start_time = pygame.time.get_ticks()
+
+                elapsed_time = (pygame.time.get_ticks() - self.hover_start_time) / 1000
+                self.hover_progress = min(elapsed_time / self.hover_duration, 1)
+
+                if self.hover_progress >= 1:
+                    self.active = True
+                    if self.action is not None:
+                        self.action()
+                break
+
+        if not any_hand_hovering:
+            self.hover_start_time = None
+            self.hover_progress = 0
+
+    def reset(self):
+        self.hover_start_time = None
+        self.hover_progress = 0
+        self.active = False
+
+    def draw(self):
+        inner_circle_color = (255, 255, 255)
+        outer_circle_color = (0, 255, 0)
+        outline_color = (0, 0, 0)
+
+        # Draw the inner circle
+        pygame.draw.circle(self.screen, inner_circle_color, (self.x, self.y), self.radius)
+
+        # Draw the outline
+        pygame.draw.circle(self.screen, outline_color, (self.x, self.y), self.radius, 5)
+
+        if self.hover_progress > 0:
+            # Draw the green outer layer when the user hovers over the button
+            angle = 360 * self.hover_progress
+            end_point_x = self.x + self.radius * math.cos(math.radians(angle - 90))
+            end_point_y = self.y + self.radius * math.sin(math.radians(angle - 90))
+
+            pygame.draw.arc(self.screen, outer_circle_color, (self.x - self.radius, self.y - self.radius, 2 * self.radius, 2 * self.radius), math.radians(-90), math.radians(angle - 90), 5)
+        if self.text:
+            text_surface = self.font.render(self.text, True, (0, 0, 0))
+            text_rect = text_surface.get_rect(center=(self.x, self.y))
+            self.screen.blit(text_surface, text_rect)
+
+
+
