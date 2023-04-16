@@ -2,6 +2,7 @@ import pygame
 import cv2
 from movenet.movenet_utils import load_model, preprocess_image, run_inference, get_hand_keypoints
 from game_objects.game_item import GameItem, HandKeyPoint, Button
+import sys
 
 def save_high_scores(high_scores, file_name="high_scores.txt"):
     with open(file_name, "w") as file:
@@ -90,11 +91,11 @@ def pause_game():
     game_paused = not game_paused
     pause_button.reset()
 
-pause_button_radius = 30
+pause_button_radius = 40
 screen_center_x = screen_width // 2
 screen_center_y = screen_height // 2
 
-pause_button = Button((screen_center_x*2)-100, (screen_center_y//2)-100, pause_button_radius, screen, action=pause_game, text="Pause")
+pause_button = Button((screen_center_x*2)-150, (screen_center_y//2)-60, pause_button_radius, screen, action=pause_game, text="Pause",font_size=40)
 
 def restart_game():
     global game_paused, score, lives, game_items, active_splash_effects, sliced_fruits
@@ -111,28 +112,24 @@ def restart_game():
 restart_button_radius = 30
 restart_button = Button(screen_width // 2, screen_height // 2 + 50, restart_button_radius, screen, action=restart_game, text="Restart")
 
-tutorial_completed = False
+left_tutorial_done = False
+right_tutorial_done = False
+left_tutorial_button = Button(screen_center_x - 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'left_tutorial_done', True), hover_duration=5, text="Left Hand")
+right_tutorial_button = Button(screen_center_x + 100, screen_center_y, 60, screen, action=lambda: setattr(sys.modules[__name__], 'right_tutorial_done', True), hover_duration=5, text="Right Hand")
+tutorial_done = False
 
-# Tutorial buttons
-tutorial_left_button = Button(screen_center_x - 100, screen_center_y, 50, screen, hover_duration=5, text="Left Hand", font_size=30)
-tutorial_right_button = Button(screen_center_x + 100, screen_center_y, 50, screen, hover_duration=5, text="Right Hand", font_size=30)
 
 # Main game loop
 running = True
 while running:
-    # Check for button hover
-
-
-    # Event handling loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == game_item_event:
+        if tutorial_done and event.type and not game_paused == game_item_event:
             # Randomly generate game items (fruits or bombs)
             item_type = random.choice(["apple", "banana", "coconut", "orange", "pineapple", "watermelon", "bomb"])
             game_item = GameItem(screen, screen_width, screen_height, item_type)
             game_items.append(game_item)
-
     # Capture webcam frame and run MoveNet inference
     ret, frame = cap.read()
     if not ret:
@@ -161,49 +158,69 @@ while running:
 
     # Clear the screen
     screen.blit(bg_image, (0, 0))
-    pause_button.check_hover([left_hand_keypoint, right_hand_keypoint])
-    pause_button.draw()
+    if not tutorial_done:
+        left_tutorial_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+        left_tutorial_button.draw()
 
-    if game_paused:
-        restart_button.check_hover([left_hand_keypoint, right_hand_keypoint])
-        restart_button.draw()
+        right_tutorial_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+        right_tutorial_button.draw()
 
-    if not game_paused:
-    # Update and render game items
-        for game_item in game_items:
-            game_item.update_position()
-            game_item.render()
-            # Check for collision between hand keypoints and the game item
-            if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
-                result, sliced, splash_effect = game_item.apply_effect()
+        if left_tutorial_done and right_tutorial_done:
+            left_tutorial_button.reset()
+            right_tutorial_button.reset()
+            tutorial_done = True
 
-                if result == "fruit":
-                    active_splash_effects.append(splash_effect)
-                    score += 1
-                    if sliced:
-                        sliced_fruits.append(sliced)
-                elif result == "bomb":
-                    lives -= 1
+    if tutorial_done:
+        pause_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+        pause_button.draw()
 
-                game_items.remove(game_item)
+        if game_paused:
+            restart_button.check_hover([left_hand_keypoint, right_hand_keypoint])
+            restart_button.draw()
 
-        
+        if not game_paused:
+
+        # Update and render game items
+            for game_item in game_items:
+                game_item.update_position()
+                game_item.render()
+                # Check for collision between hand keypoints and the game item
+                if game_item.check_collision([left_hand_keypoint, right_hand_keypoint]):
+                    result, sliced, splash_effect = game_item.apply_effect()
+
+                    if result == "fruit":
+                        active_splash_effects.append(splash_effect)
+                        score += 1
+                        if sliced:
+                            sliced_fruits.append(sliced)
+                    elif result == "bomb":
+                        lives -= 1
+
+                    game_items.remove(game_item)
+
+            
 
 
-            # Remove game items that are out of bounds
-            if game_item.out_of_bounds():
-                game_items.remove(game_item)
-        for splash_effect in active_splash_effects:
-            should_keep = splash_effect.render()
-            if not should_keep:
-                active_splash_effects.remove(splash_effect)
+                # Remove game items that are out of bounds
+                if game_item.out_of_bounds():
+                    game_items.remove(game_item)
 
-        for sliced_fruit in sliced_fruits[:]:
-            sliced_fruit.update_position(screen_height)
-            sliced_fruit.render()
+            for splash_effect in active_splash_effects:
+                should_keep = splash_effect.render()
+                if not should_keep:
+                    active_splash_effects.remove(splash_effect)
 
-            if sliced_fruit.out_of_bounds(screen_height):
-                sliced_fruits.remove(sliced_fruit)
+            for sliced_fruit in sliced_fruits[:]:
+                sliced_fruit.update_position(screen_height)
+                sliced_fruit.render()
+
+                if sliced_fruit.out_of_bounds(screen_height):
+                    sliced_fruits.remove(sliced_fruit)
+                # Display the score and lives
+            score_text = custom_font.render(f"Score: {score}", 1, (0, 0, 0))
+            screen.blit(score_text, (10, 10))
+            lives_text = custom_font.render(f"Lives: {lives}", 1, (0, 0, 0))
+            screen.blit(lives_text, (screen_width - 200, 10))
 
 
 
@@ -213,11 +230,7 @@ while running:
 
 
 
-    # Display the score and lives
-    score_text = custom_font.render(f"Score: {score}", 1, (255, 255, 255))
-    screen.blit(score_text, (10, 10))
-    lives_text = custom_font.render(f"Lives: {lives}", 1, (255, 255, 255))
-    screen.blit(lives_text, (screen_width - 200, 10))
+
 
     # Update the screen
     pygame.display.flip()
@@ -237,7 +250,7 @@ while running:
 
 
     # Limit the frame rate
-    clock.tick(FPS)
+    #clock.tick(FPS)
 
 # Release resources
 cap.release()

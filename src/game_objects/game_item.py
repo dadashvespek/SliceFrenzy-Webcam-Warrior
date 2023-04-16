@@ -270,7 +270,7 @@ class Button:
         self.text = text
         self.font = pygame.font.Font(None, font_size)
 
-    def check_hover(self, hand_keypoints, hover_distance=30):
+    def check_hover(self, hand_keypoints, hover_distance=50):
         any_hand_hovering = False
         for keypoint in hand_keypoints:
             x, y = int(keypoint.x), int(keypoint.y)
